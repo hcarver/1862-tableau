@@ -85,9 +85,9 @@ function App() {
     const count = parseInt(inputRef.current.value) || 1
 
     const new_cards = []
-    let last_tableau = null;
+    let last_tableau = tableau;
     for(let i = 0; i < count; ++i) {
-      const [new_tableau, card] = tableau.draw_card()
+      const [new_tableau, card] = last_tableau.draw_card()
       if(card) {
         new_cards.push(card)
         last_tableau = new_tableau
