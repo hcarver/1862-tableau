@@ -68,24 +68,43 @@ class Tableau {
   }
 }
 
+class AppState {
+  constructor(tableau, drawnCards) {
+    this.tableau = tableau || new Tableau()
+    this.drawnCards = drawnCards || []
+  }
+
+  serialize() {
+    return JSON.stringify({
+      tableau: this.tableau.serialize(),
+      drawnCards: Array.from(this.drawnCards.entries())
+    })
+  }
+
+  deserialize_from(str) {
+    if(str) {
+      const parsed = JSON.parse(str)
+
+      this.tableau = new Tableau().deserialize_from(parsed.tableau)
+      this.drawnCards = parsed.drawnCards
+    }
+    return this;
+  }
+}
+
 function App() {
-  const [drawnCards, setDrawnCards] = React.useState(JSON.parse(localStorage.getItem('drawn-cards') || '[]'));
-  const [tableau, setTableau] = React.useState(new Tableau().deserialize_from(localStorage.getItem('tableau')));
+  const [appState, setAppState] = React.useState(new AppState().deserialize_from(localStorage.getItem('appState')));
   const inputRef = React.useRef()
 
   React.useEffect( () => {
-    localStorage.setItem('tableau', tableau.serialize())
-  }, [tableau])
-
-  React.useEffect( () => {
-    localStorage.setItem('drawn-cards', JSON.stringify(drawnCards))
-  }, [drawnCards])
+    localStorage.setItem('appState', appState.serialize())
+  }, [appState])
 
   const drawCardButton = () => {
     const count = parseInt(inputRef.current.value) || 1
 
     const new_cards = []
-    let last_tableau = tableau;
+    let last_tableau = appState.tableau;
     for(let i = 0; i < count; ++i) {
       const [new_tableau, card] = last_tableau.draw_card()
       if(card) {
@@ -93,16 +112,25 @@ function App() {
         last_tableau = new_tableau
       }
     }
-    setDrawnCards([...new_cards, ...drawnCards])
 
-    if(last_tableau) {
-      setTableau(last_tableau)
-    }
+    setAppState(
+      new AppState(
+        last_tableau,
+        [...new_cards, ...appState.drawnCards]
+      )
+    )
 
     inputRef.current.value = 1
   }
 
+  const tableau = appState.tableau;
+
   const removed_companies = tableau.removed_companies
+  const reset = () => {setAppState(new AppState(new Tableau(), []))}
+
+  const company_list = (companies) => <ul className="list-unstyled">
+    {companies.map(c => <li key={c}>{c}</li>)}
+  </ul>
 
   return (
     <div className="App">
@@ -118,7 +146,7 @@ function App() {
         <div className="card">
           <div className="card-body">
             <h5 className="card-title">Deck state</h5>
-            <p className="card-text">
+            <div className="card-text">
               <p>
                 {`Cards in deck:
                   ${tableau.total_count()}`}
@@ -128,26 +156,24 @@ function App() {
                 {" "}
                 {COMPANIES.map(company => `${company}: ${tableau.current_count(company)}`).join(", ")}
               </p>
-            </p>
+            </div>
           </div>
         </div>
         <div className="card">
           <div className="card-body">
             <h5 className="card-title">Draw cards</h5>
-            <p className="card-text">
-              <p>
-                <div className="form-inline justify-content-center">
-                  <input className="form-control" type="number" min="1" ref={inputRef} placeholder="How many to draw"/>
-                  <button className="btn btn-primary" onClick={drawCardButton}>Draw card</button>
-                </div>
+            <div className="card-text">
+              <p className="form-inline justify-content-center">
+                <input className="form-control" type="number" min="1" ref={inputRef} placeholder="How many to draw"/>
+                <button className="btn btn-primary" onClick={drawCardButton}>Draw card</button>
               </p>
               <p>
                 Cards you've drawn (most recent first)
               </p>
               <ul className="list-unstyled">
-                {drawnCards.map(c => <li>{c}</li>)}
+                {company_list(appState.drawnCards)}
               </ul>
-            </p>
+            </div>
           </div>
         </div>
         <div className="card">
@@ -157,7 +183,7 @@ function App() {
               Removed companies:
             </p>
             <ul className="list-unstyled">
-              {removed_companies.map(company => <li>{company}</li>)}
+              {company_list(removed_companies)}
             </ul>
             <p>
               Remaining companies:
@@ -165,8 +191,8 @@ function App() {
             <ul className="list-unstyled">
               {
                 COMPANIES.filter(c => !tableau.removed_companies.includes(c)).map(
-                  company => <li>
-                    <button className="btn btn-link py-0" aria-label={`Remove ${company}`} onClick={(e) => {setTableau(tableau.remove_company(company));}}>
+                  company => <li key={company}>
+                    <button className="btn btn-link py-0" aria-label={`Remove ${company}`} onClick={(e) => {setAppState(new AppState(tableau.remove_company(company), appState.drawnCards))}}>
                       <span aria-hidden="true" className="text-danger">&times;</span>
                       {" "}
                       {company}
@@ -179,7 +205,7 @@ function App() {
         </div>
       </div>
       <div>
-        <button className="btn btn-block btn-warning" onClick={() => {setTableau(new Tableau()); setDrawnCards([]);}}>RESET</button>
+        <button className="btn btn-block btn-warning" onClick={reset}>RESET</button>
       </div>
     </div>
   );
