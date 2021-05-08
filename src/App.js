@@ -135,6 +135,7 @@ function App() {
 
   const removed_companies = tableau.removed_companies
   const reset = () => {if(window.confirm("Are you sure you want to reset?")) {setHistory([])}}
+  const undo = () => {setHistory(history.slice(0, history.length - 1))}
 
   const company_list = (companies) => <ul className="list-unstyled">
     {companies.map(c => <li>{c}</li>)}
@@ -150,6 +151,14 @@ function App() {
           Play 1862 solo without all the damned shuffling.
         </small>
       </header>
+      <div className="row no-gutters">
+        <div className="col-6">
+          <button className="btn btn-block btn-secondary rounded-0" onClick={undo}>UNDO</button>
+        </div>
+        <div className="col-6">
+          <button className="btn btn-block btn-warning rounded-0" onClick={reset}>RESET</button>
+        </div>
+      </div>
       <div className="card-columns">
         <div className="card">
           <div className="card-body">
@@ -211,9 +220,6 @@ function App() {
             </ul>
           </div>
         </div>
-      </div>
-      <div>
-        <button className="btn btn-block btn-warning" onClick={reset}>RESET</button>
       </div>
     </div>
   );
