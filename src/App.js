@@ -77,7 +77,7 @@ class AppState {
   serialize() {
     return JSON.stringify({
       tableau: this.tableau.serialize(),
-      drawnCards: Array.from(this.drawnCards.entries())
+      drawnCards: this.drawnCards
     })
   }
 
@@ -93,12 +93,20 @@ class AppState {
 }
 
 function App() {
-  const [appState, setAppState] = React.useState(new AppState().deserialize_from(localStorage.getItem('appState')));
-  const inputRef = React.useRef()
+  const storedHistory = JSON.parse(localStorage.getItem('history') || '[]')
+  const parsedHistory = storedHistory.map(item => new AppState().deserialize_from(item))
+
+  const [history, setHistory] = React.useState(parsedHistory);
 
   React.useEffect( () => {
-    localStorage.setItem('appState', appState.serialize())
-  }, [appState])
+    localStorage.setItem('history', JSON.stringify(history.map(item => item.serialize())))
+  }, [history])
+
+
+  const appState = history.length > 0 ? history[history.length - 1] : new AppState()
+  const setAppState = newState => setHistory([...history, newState])
+
+  const inputRef = React.useRef()
 
   const drawCardButton = () => {
     const count = parseInt(inputRef.current.value) || 1
@@ -126,10 +134,10 @@ function App() {
   const tableau = appState.tableau;
 
   const removed_companies = tableau.removed_companies
-  const reset = () => {setAppState(new AppState(new Tableau(), []))}
+  const reset = () => {if(window.confirm("Are you sure you want to reset?")) {setHistory([])}}
 
   const company_list = (companies) => <ul className="list-unstyled">
-    {companies.map(c => <li key={c}>{c}</li>)}
+    {companies.map(c => <li>{c}</li>)}
   </ul>
 
   return (
