@@ -10,6 +10,7 @@ class Tableau {
   constructor() {
     this.cards = new Map()
     this.removed_companies = []
+    this.active_companies = []
 
     COMPANIES.forEach(company => {
       this.cards.set(company, 7)
@@ -19,6 +20,7 @@ class Tableau {
   serialize() {
     return JSON.stringify({
       rc: this.removed_companies,
+      ac: this.active_companies,
       cards: JSON.stringify(Array.from(this.cards.entries()))
     })
   }
@@ -28,6 +30,7 @@ class Tableau {
       const parsed = JSON.parse(str)
 
       this.removed_companies = parsed['rc']
+      this.active_companies = parsed['ac'] || []
       this.cards = new Map(JSON.parse(parsed['cards']))
     }
     return this;
@@ -46,6 +49,23 @@ class Tableau {
     newTableau.removed_companies = [...this.removed_companies, company]
     newTableau.cards = new Map(this.cards)
     newTableau.cards.set(company, 0)
+    newTableau.active_companies = [...this.active_companies]
+    return newTableau
+  }
+
+  activate_company(company) {
+    const newTableau = new Tableau()
+    newTableau.active_companies = [...this.active_companies, company]
+    newTableau.cards = new Map(this.cards)
+    newTableau.removed_companies = [...this.removed_companies]
+    return newTableau
+  }
+
+  deactivate_company(company) {
+    const newTableau = new Tableau()
+    newTableau.active_companies = this.active_companies.filter(c => c !== company)
+    newTableau.cards = new Map(this.cards)
+    newTableau.removed_companies = [...this.removed_companies]
     return newTableau
   }
 
@@ -57,14 +77,33 @@ class Tableau {
       ...COMPANIES.map((company) => Array(this.current_count(company)).fill(company))
     )
 
-    const picked_card = all_cards[Math.floor(Math.random() * all_cards.length)]
+    const picked_card = this.random_member(all_cards)
 
     const new_tableau = new Tableau()
     new_tableau.removed_companies = [...this.removed_companies]
+    new_tableau.active_companies = [...this.active_companies]
     new_tableau.cards = new Map(this.cards)
     new_tableau.cards.set(picked_card, this.cards.get(picked_card) - 1)
 
     return [new_tableau, picked_card]
+  }
+
+  remove_random_company() {
+    debugger;
+
+    const remaining_companies = COMPANIES.filter(c => !this.removed_companies.includes(c) && !this.active_companies.includes(c))
+
+    if(remaining_companies.length === 0) {
+      return this;
+    }
+
+    const removed = this.random_member(remaining_companies)
+
+    return this.remove_company(removed)
+  }
+
+  random_member(list) {
+    return list[Math.floor(Math.random() * list.length)]
   }
 }
 
@@ -90,6 +129,25 @@ class AppState {
     }
     return this;
   }
+}
+
+const DeckDisplay = ({tableau}) => {
+  return <div className="card">
+    <div className="card-body">
+      <h5 className="card-title">Deck state</h5>
+      <div className="card-text">
+        <p>
+          {`Cards in deck:
+                  ${tableau.total_count()}`}
+        </p>
+        <p>
+          Card counts:
+          {" "}
+          {COMPANIES.map(company => `${company}: ${tableau.current_count(company)}`).join(", ")}
+        </p>
+      </div>
+    </div>
+  </div>
 }
 
 function App() {
@@ -133,7 +191,6 @@ function App() {
 
   const tableau = appState.tableau;
 
-  const removed_companies = tableau.removed_companies
   const reset = () => {if(window.confirm("Are you sure you want to reset?")) {setHistory([])}}
   const undo = () => {setHistory(history.slice(0, history.length - 1))}
 
@@ -160,22 +217,7 @@ function App() {
         </div>
       </div>
       <div className="card-columns">
-        <div className="card">
-          <div className="card-body">
-            <h5 className="card-title">Deck state</h5>
-            <div className="card-text">
-              <p>
-                {`Cards in deck:
-                  ${tableau.total_count()}`}
-              </p>
-              <p>
-                Card counts:
-                {" "}
-                {COMPANIES.map(company => `${company}: ${tableau.current_count(company)}`).join(", ")}
-              </p>
-            </div>
-          </div>
-        </div>
+        <DeckDisplay tableau={tableau} />
         <div className="card">
           <div className="card-body">
             <h5 className="card-title">Draw cards</h5>
@@ -187,35 +229,55 @@ function App() {
               <p>
                 Cards you've drawn (most recent first)
               </p>
-              <ul className="list-unstyled">
-                {company_list(appState.drawnCards)}
-              </ul>
+              {company_list(appState.drawnCards)}
             </div>
           </div>
         </div>
         <div className="card">
           <div className="card-body">
             <h5 className="card-title">Companies</h5>
-            <p className="card-text">
-              Removed companies:
-            </p>
-            <ul className="list-unstyled">
-              {company_list(removed_companies)}
-            </ul>
-            <p>
-              Remaining companies:
-            </p>
-            <ul className="list-unstyled">
-              {
-                COMPANIES.filter(c => !tableau.removed_companies.includes(c)).map(
-                  company => <li key={company}>
+            <div className="text-left">
+              <button className="btn btn-link" aria-label="Remove random company" onClick={(e) => {setAppState(new AppState(tableau.remove_random_company(), appState.drawnCards))}}>
+                <span aria-hidden="true" className="text-danger">&times;</span>
+                {" "}
+                Remove random company
+              </button>
+            </div>
+            <ul className="list-unstyled text-left">
+              { COMPANIES.map(company => {
+                let status;
+                let actions;
+                if(tableau.removed_companies.includes(company)) {
+                  status = "(removed)"
+                } else if(tableau.active_companies.includes(company)) {
+                  status = "(active)"
+                  actions = [
+                    <button className="btn btn-link py-0" aria-label={`Deactivate ${company}`} onClick={(e) => {setAppState(new AppState(tableau.deactivate_company(company), appState.drawnCards))}}>
+                      <span aria-hidden="true" className="text-danger">&times;</span>
+                      Deactivate
+                    </button>
+                  ]
+                } else {
+                  actions = [
                     <button className="btn btn-link py-0" aria-label={`Remove ${company}`} onClick={(e) => {setAppState(new AppState(tableau.remove_company(company), appState.drawnCards))}}>
                       <span aria-hidden="true" className="text-danger">&times;</span>
-                      {" "}
-                      {company}
+                      Remove
+                    </button>,
+                    <button className="btn btn-link py-0" aria-label={`Activate ${company}`} onClick={(e) => {setAppState(new AppState(tableau.activate_company(company), appState.drawnCards))}}>
+                      <span aria-hidden="true" className="text-danger">&#10003;</span>
+                      Activate
                     </button>
-                  </li>
-                )
+                  ]
+                }
+
+                return <li>
+                  {company}
+                  {" "}
+                  <small>{status}</small>
+                  {" "}
+                  {actions}
+                </li>
+              })
               }
             </ul>
           </div>
