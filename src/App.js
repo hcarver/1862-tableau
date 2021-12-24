@@ -1,6 +1,8 @@
 import './App.css';
 import React from 'react';
 
+import CardSet from './fn_core/card_set'
+
 const COMPANIES = [
   "WNR", "ENR", "W&F", "L&H", "L&D", "WStI", "L&E", "E&H", "NGC", "N&E",
   "I&B", "N&B", "SVR", "ECR", "EUR", "ESR", "FDR", "WVR", "N&S", "Y&N"
@@ -108,15 +110,21 @@ class Tableau {
 }
 
 class AppState {
-  constructor(tableau, drawnCards) {
+  constructor(tableau, drawnCards, hand, bank_pool, charters) {
     this.tableau = tableau || new Tableau()
     this.drawnCards = drawnCards || []
+    this.hand = hand || new CardSet()
+    this.bank_pool = bank_pool || new CardSet()
+    this.charters = charters || new CardSet()
   }
 
   serialize() {
     return JSON.stringify({
       tableau: this.tableau.serialize(),
-      drawnCards: this.drawnCards
+      drawnCards: this.drawnCards,
+      bank: this.bank_pool.to_obj(),
+      hand: this.hand.to_obj(),
+      charters: this.charters.to_obj()
     })
   }
 
@@ -126,9 +134,27 @@ class AppState {
 
       this.tableau = new Tableau().deserialize_from(parsed.tableau)
       this.drawnCards = parsed.drawnCards
+      this.bank_pool = new CardSet(parsed.bank)
+      this.hand = new CardSet(parsed.hand)
+      this.charters = new CardSet(parsed.charters)
     }
     return this;
   }
+}
+
+const DisplayCardSet = ({card_set}) => {
+  const companies = card_set.company_list()
+
+  const counts = companies.map(x => {
+    return <div>
+      {x}
+      {" x "}
+      {card_set.company_count(x)}
+    </div>
+  })
+  return <div>
+    {counts}
+  </div>
 }
 
 const DeckDisplay = ({tableau}) => {
@@ -150,14 +176,25 @@ const DeckDisplay = ({tableau}) => {
   </div>
 }
 
+const Card = ({title, children}) => {
+  return <div className="card">
+    <div className="card-body">
+      <h5 className="card-title">{title}</h5>
+      {children}
+    </div>
+  </div>
+}
+
+const history_version = 0
+
 function App() {
-  const storedHistory = JSON.parse(localStorage.getItem('history') || '[]')
+  const storedHistory = JSON.parse(localStorage.getItem('history-v' + history_version) || '[]')
   const parsedHistory = storedHistory.map(item => new AppState().deserialize_from(item))
 
   const [history, setHistory] = React.useState(parsedHistory);
 
   React.useEffect( () => {
-    localStorage.setItem('history', JSON.stringify(history.map(item => item.serialize())))
+    localStorage.setItem('history-v' + history_version, JSON.stringify(history.map(item => item.serialize())))
   }, [history])
 
 
@@ -182,7 +219,10 @@ function App() {
     setAppState(
       new AppState(
         last_tableau,
-        [...new_cards, ...appState.drawnCards]
+        [...new_cards, ...appState.drawnCards],
+        appState.hand,
+        appState.bank_pool,
+        appState.charters
       )
     )
 
@@ -195,7 +235,39 @@ function App() {
   const undo = () => {setHistory(history.slice(0, history.length - 1))}
 
   const company_list = (companies) => <ul className="list-unstyled">
-    {companies.map(c => <li>{c}</li>)}
+    {companies.map((c,i) => <li>
+      {c}
+      <button className="btn btn-link py-0" aria-label={`To hand ${c}`}
+      onClick={(e) => {
+        const new_hand = appState.hand.with_added_card(c)
+
+        setAppState(
+          new AppState(
+            tableau,
+            appState.drawnCards.filter((x,filterIndex) => filterIndex !== i),
+            new_hand,
+            appState.bank_pool,
+            appState.charters))}}
+      >
+        <span aria-hidden="true" className="text-danger">✋</span>
+        To hand
+      </button>
+      <button className="btn btn-link py-0" aria-label={`To charter ${c}`}
+      onClick={(e) => {
+        const new_hand = appState.hand.with_added_card(c)
+
+        setAppState(
+          new AppState(
+            tableau,
+            appState.drawnCards.filter((x,filterIndex) => filterIndex !== i),
+            appState.hand,
+            appState.bank_pool,
+            appState.charters.with_added_card(c)))}}
+      >
+        <span aria-hidden="true" className="text-danger">📜</span>
+        To charter
+      </button>
+      </li>)}
   </ul>
 
   return (
@@ -218,70 +290,73 @@ function App() {
       </div>
       <div className="card-columns">
         <DeckDisplay tableau={tableau} />
-        <div className="card">
-          <div className="card-body">
-            <h5 className="card-title">Draw cards</h5>
-            <div className="card-text">
-              <p className="form-inline justify-content-center">
-                <input className="form-control" type="number" min="1" ref={inputRef} placeholder="How many to draw"/>
-                <button className="btn btn-primary" onClick={drawCardButton}>Draw card</button>
-              </p>
-              <p>
-                Cards you've drawn (most recent first)
-              </p>
-              {company_list(appState.drawnCards)}
-            </div>
+        <Card title="Draw cards">
+          <div className="card-text">
+            <p className="form-inline justify-content-center">
+              <input className="form-control" type="number" min="1" ref={inputRef} placeholder="How many to draw"/>
+              <button className="btn btn-primary" onClick={drawCardButton}>Draw card</button>
+            </p>
+            <p>
+              Cards you've drawn (most recent first)
+            </p>
+            {company_list(appState.drawnCards)}
           </div>
-        </div>
-        <div className="card">
-          <div className="card-body">
-            <h5 className="card-title">Companies</h5>
-            <div className="text-left">
-              <button className="btn btn-link" aria-label="Remove random company" onClick={(e) => {setAppState(new AppState(tableau.remove_random_company(), appState.drawnCards))}}>
-                <span aria-hidden="true" className="text-danger">&times;</span>
-                {" "}
-                Remove random company
-              </button>
-            </div>
-            <ul className="list-unstyled text-left">
-              { COMPANIES.map(company => {
-                let status;
-                let actions;
-                if(tableau.removed_companies.includes(company)) {
-                  status = "(removed)"
-                } else if(tableau.active_companies.includes(company)) {
-                  status = "(active)"
-                  actions = [
-                    <button className="btn btn-link py-0" aria-label={`Deactivate ${company}`} onClick={(e) => {setAppState(new AppState(tableau.deactivate_company(company), appState.drawnCards))}}>
-                      <span aria-hidden="true" className="text-danger">&times;</span>
-                      Deactivate
-                    </button>
-                  ]
-                } else {
-                  actions = [
-                    <button className="btn btn-link py-0" aria-label={`Remove ${company}`} onClick={(e) => {setAppState(new AppState(tableau.remove_company(company), appState.drawnCards))}}>
-                      <span aria-hidden="true" className="text-danger">&times;</span>
-                      Remove
-                    </button>,
-                    <button className="btn btn-link py-0" aria-label={`Activate ${company}`} onClick={(e) => {setAppState(new AppState(tableau.activate_company(company), appState.drawnCards))}}>
-                      <span aria-hidden="true" className="text-danger">&#10003;</span>
-                      Activate
-                    </button>
-                  ]
-                }
-
-                return <li>
-                  {company}
-                  {" "}
-                  <small>{status}</small>
-                  {" "}
-                  {actions}
-                </li>
-              })
+        </Card>
+        <Card title="Hand">
+          <DisplayCardSet card_set={appState.hand} />
+        </Card>
+        <Card title="Bank pool">
+          <DisplayCardSet card_set={appState.bank_pool} />
+        </Card>
+        <Card title="On charters">
+          <DisplayCardSet card_set={appState.charters} />
+        </Card>
+        <Card title="Companies">
+          <div className="text-left">
+            <button className="btn btn-link" aria-label="Remove random company" onClick={(e) => {setAppState(new AppState(tableau.remove_random_company(), appState.drawnCards, appState.hand, appState.bank_pool, appState.charters))}}>
+              <span aria-hidden="true" className="text-danger">&times;</span>
+              {" "}
+              Remove random company
+            </button>
+          </div>
+          <ul className="list-unstyled text-left">
+            { COMPANIES.map(company => {
+              let status;
+              let actions;
+              if(tableau.removed_companies.includes(company)) {
+                status = "(removed)"
+              } else if(tableau.active_companies.includes(company)) {
+                status = "(active)"
+                actions = [
+                  <button className="btn btn-link py-0" aria-label={`Deactivate ${company}`} onClick={(e) => {setAppState(new AppState(tableau.deactivate_company(company), appState.drawnCards, appState.hand, appState.bank_pool, appState.charters))}}>
+                    <span aria-hidden="true" className="text-danger">&times;</span>
+                    Deactivate
+                  </button>
+                ]
+              } else {
+                actions = [
+                  <button className="btn btn-link py-0" aria-label={`Remove ${company}`} onClick={(e) => {setAppState(new AppState(tableau.remove_company(company), appState.drawnCards, appState.hand, appState.bank_pool, appState.charters))}}>
+                    <span aria-hidden="true" className="text-danger">&times;</span>
+                    Remove
+                  </button>,
+                  <button className="btn btn-link py-0" aria-label={`Activate ${company}`} onClick={(e) => {setAppState(new AppState(tableau.activate_company(company), appState.drawnCards, appState.hand, appState.bank_pool, appState.charters))}}>
+                    <span aria-hidden="true" className="text-danger">&#10003;</span>
+                    Activate
+                  </button>
+                ]
               }
-            </ul>
-          </div>
-        </div>
+
+              return <li>
+                {company}
+                {" "}
+                <small>{status}</small>
+                {" "}
+                {actions}
+              </li>
+            })
+            }
+          </ul>
+        </Card>
       </div>
     </div>
   );
