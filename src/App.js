@@ -5,14 +5,19 @@ import COMPANIES from './fn_core/companies'
 import AppState from './fn_core/app_state'
 
 
-const DisplayCardSet = ({card_set}) => {
+const DisplayCardSet = ({card_set, actions_per_card = []}) => {
   const companies = card_set.company_list()
 
   const counts = companies.map(x => {
+    const actions = actions_per_card.map(action =>
+      action(x)
+    )
+
     return <div>
       {x}
       {" x "}
       {card_set.company_count(x)}
+      {actions}
     </div>
   })
   return <div>
@@ -94,36 +99,56 @@ function App() {
   const reset = () => {if(window.confirm("Are you sure you want to reset?")) {setHistory([])}}
   const undo = () => {setHistory(history.slice(0, history.length - 1))}
 
+  const toBankButton = callback => <button
+    className="btn btn-link py-0"
+    aria-label="Move to bank pool"
+    onClick={ callback } >
+    🏦 To bank pool
+  </button>
+
+  const toHandButton = callback => <button
+    className="btn btn-link py-0"
+    aria-label="Move to hand"
+    onClick={ callback } >
+    ✋
+    To hand
+  </button>
+
+  const toCharterButton = callback => <button
+    className="btn btn-link py-0"
+    aria-label="Move to charter"
+    onClick={ callback } >
+    📜
+    To charter
+  </button>
+
   const company_list = (companies) => <ul className="list-unstyled">
     {companies.map((c,i) => <li>
       {c}
-      <button className="btn btn-link py-0" aria-label={`To hand ${c}`}
-      onClick={(e) => {
-        const new_hand = appState.hand.with_added_card(c)
-        const new_cards = appState.drawnCards.filter((x,filterIndex) => filterIndex !== i)
+      {
+        toHandButton(e => {
+          const new_hand = appState.hand.with_added_card(c)
+          const new_cards = appState.drawnCards.filter((x,filterIndex) => filterIndex !== i)
 
-        setAppState(
-          appState.with_updates({drawnCards: new_cards,
-            hand: new_hand}))
-      }}
-      >
-        <span aria-hidden="true" className="text-danger">✋</span>
-        To hand
-      </button>
-      <button className="btn btn-link py-0" aria-label={`To charter ${c}`}
-      onClick={(e) => {
-        setAppState(
-          appState.with_updates({
-            drawnCards: appState.drawnCards.filter((x,filterIndex) => filterIndex !== i),
-            charters: appState.charters.with_added_card(c)
-          }))
-      }}
-      >
-        <span aria-hidden="true" className="text-danger">📜</span>
-        To charter
-      </button>
+          setAppState(
+            appState.with_updates({drawnCards: new_cards,
+              hand: new_hand})
+          )
+        })
+      }
+      {
+        toCharterButton(e => {
+          setAppState(
+            appState.with_updates({
+              drawnCards: appState.drawnCards.filter((x,filterIndex) => filterIndex !== i),
+              charters: appState.charters.with_added_card(c)
+            })
+          )
+        })
+      }
       </li>)}
   </ul>
+
 
   return (
     <div className="App">
@@ -158,13 +183,52 @@ function App() {
           </div>
         </Card>
         <Card title="Hand">
-          <DisplayCardSet card_set={appState.hand} />
+          <DisplayCardSet card_set={appState.hand} actions_per_card={
+            [company =>
+              toBankButton(e => {
+                setAppState(appState.with_updates({
+                  hand: appState.hand.without_card(company),
+                  bank_pool: appState.bank_pool.with_added_card(company)
+                }))
+              })
+            ]
+          }/>
         </Card>
         <Card title="Bank pool">
-          <DisplayCardSet card_set={appState.bank_pool} />
+          <DisplayCardSet card_set={appState.bank_pool} actions_per_card={
+            [
+              company => toHandButton(e => {
+                setAppState(appState.with_updates({
+                  bank_pool: appState.bank_pool.without_card(company),
+                  hand: appState.hand.with_added_card(company)
+                }))
+              }),
+              company => toCharterButton(e => {
+                setAppState(appState.with_updates({
+                  bank_pool: appState.bank_pool.without_card(company),
+                  charters: appState.charters.with_added_card(company)
+                }))
+              })
+            ]
+          }/>
         </Card>
         <Card title="On charters">
-          <DisplayCardSet card_set={appState.charters} />
+          <DisplayCardSet card_set={appState.charters} actions_per_card={
+            [
+              company => toHandButton(e => {
+                setAppState(appState.with_updates({
+                  charters: appState.charters.without_card(company),
+                  hand: appState.hand.with_added_card(company)
+                }))
+              }),
+              company => toBankButton(e => {
+                setAppState(appState.with_updates({
+                  charters: appState.charters.without_card(company),
+                  bank_pool: appState.bank_pool.with_added_card(company)
+                }))
+              })
+            ]
+          }/>
         </Card>
         <Card title="Companies">
           <div className="text-left">

@@ -29,6 +29,21 @@ class CardSet {
     toRet.cards.set(company, (toRet.cards.get(company) || 0) + 1)
     return toRet
   }
+
+  without_card(company) {
+    const toRet = new CardSet()
+
+    for(const [k,v] of this.cards) {
+      toRet.cards.set(k, v)
+    }
+    toRet.cards.set(company, (toRet.cards.get(company) - 1))
+
+    if(toRet.cards.get(company) === 0) {
+      toRet.cards.delete(company)
+    }
+
+    return toRet
+  }
 }
 
 export default CardSet
