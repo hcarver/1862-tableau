@@ -4,31 +4,14 @@ import React from 'react';
 import COMPANIES from './fn_core/companies'
 import AppState from './fn_core/app_state'
 import { useLocalStorageForHistory } from './imperative_shell/hooks'
+import { toBankButton, toCharterButton, toHandButton } from './cpts/buttons'
 
 import Card from './cpts/Card'
-
-const DisplayCardSet = ({card_set, actions_per_card = []}) => {
-  const companies = card_set.company_list()
-
-  const counts = companies.map(x => {
-    const actions = actions_per_card.map(action =>
-      action(x)
-    )
-
-    return <div>
-      {x}
-      {" x "}
-      {card_set.company_count(x)}
-      {actions}
-    </div>
-  })
-  return <div>
-    {counts}
-  </div>
-}
+import CardSet from './cpts/CardSet'
+import Tableau from './cpts/Tableau'
 
 const DeckDisplay = ({tableau}) => {
-  return <Card title="Tableau">
+  return <Card title="Deck">
     <p>
       {`Cards in deck:
                   ${tableau.total_count()}`}
@@ -47,85 +30,10 @@ function App() {
   const appState = history.length > 0 ? history[history.length - 1] : new AppState()
   const setAppState = newState => setHistory([...history, newState])
 
-  const inputRef = React.useRef()
-
-  const drawCardButton = () => {
-    const count = parseInt(inputRef.current.value) || 1
-
-    const new_cards = []
-    let last_tableau = appState.tableau;
-    for(let i = 0; i < count; ++i) {
-      const [new_tableau, card] = last_tableau.draw_card()
-      if(card) {
-        new_cards.push(card)
-        last_tableau = new_tableau
-      }
-    }
-
-    const newAppState = appState.with_updates({
-      tableau: last_tableau,
-      drawnCards: [...new_cards, ...appState.drawnCards]
-    })
-
-    setAppState(newAppState)
-
-    inputRef.current.value = 1
-  }
-
   const tableau = appState.tableau;
 
   const reset = () => {if(window.confirm("Are you sure you want to reset?")) {setHistory([])}}
   const undo = () => {setHistory(history.slice(0, history.length - 1))}
-
-  const toBankButton = callback => <button
-    className="btn btn-link py-0"
-    aria-label="Move to bank pool"
-    onClick={ callback } >
-    🏦 To bank pool
-  </button>
-
-  const toHandButton = callback => <button
-    className="btn btn-link py-0"
-    aria-label="Move to hand"
-    onClick={ callback } >
-    ✋
-    To hand
-  </button>
-
-  const toCharterButton = callback => <button
-    className="btn btn-link py-0"
-    aria-label="Move to charter"
-    onClick={ callback } >
-    📜
-    To charter
-  </button>
-
-  const company_list = (companies) => <ul className="list-unstyled">
-    {companies.map((c,i) => <li>
-      {c}
-      {
-        toHandButton(e => {
-          const new_hand = appState.hand.with_added_card(c)
-          const new_cards = appState.drawnCards.filter((x,filterIndex) => filterIndex !== i)
-
-          setAppState(
-            appState.with_updates({drawnCards: new_cards,
-              hand: new_hand})
-          )
-        })
-      }
-      {
-        toCharterButton(e => {
-          setAppState(
-            appState.with_updates({
-              drawnCards: appState.drawnCards.filter((x,filterIndex) => filterIndex !== i),
-              charters: appState.charters.with_added_card(c)
-            })
-          )
-        })
-      }
-      </li>)}
-  </ul>
 
 
   return (
@@ -204,22 +112,11 @@ function App() {
             </Card>
           </div>
           <div className="col-6">
-            <Card title="Draw cards">
-              <div className="card-text">
-                <p className="form-inline justify-content-center">
-                  <input className="form-control" type="number" min="1" ref={inputRef} placeholder="How many to draw"/>
-                  <button className="btn btn-primary" onClick={drawCardButton}>Draw card</button>
-                </p>
-                <p>
-                  Cards you've drawn (most recent first)
-                </p>
-                {company_list(appState.drawnCards)}
-              </div>
-            </Card>
+            <Tableau appState={appState} setAppState={setAppState} />
           </div>
           <div className="col-3">
             <Card title="Hand">
-              <DisplayCardSet card_set={appState.hand} actions_per_card={
+              <CardSet card_set={appState.hand} actions_per_card={
                 [company =>
                   toBankButton(e => {
                     setAppState(appState.with_updates({
@@ -231,7 +128,7 @@ function App() {
               }/>
             </Card>
             <Card title="Bank pool">
-              <DisplayCardSet card_set={appState.bank_pool} actions_per_card={
+              <CardSet card_set={appState.bank_pool} actions_per_card={
                 [
                   company => toHandButton(e => {
                     setAppState(appState.with_updates({
@@ -249,7 +146,7 @@ function App() {
               }/>
             </Card>
             <Card title="On charters">
-              <DisplayCardSet card_set={appState.charters} actions_per_card={
+              <CardSet card_set={appState.charters} actions_per_card={
                 [
                   company => toHandButton(e => {
                     setAppState(appState.with_updates({
