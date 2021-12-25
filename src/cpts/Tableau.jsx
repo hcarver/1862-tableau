@@ -3,7 +3,7 @@ import React from 'react'
 import Card from './Card'
 import { toCharterButton, toHandButton } from './buttons'
 
-const Tableau = ({appState, setAppState}) => {
+const Tableau = ({appState, pushNewState}) => {
   const inputRef = React.useRef()
 
   const drawCardButton = () => {
@@ -24,7 +24,7 @@ const Tableau = ({appState, setAppState}) => {
       drawnCards: [...new_cards, ...appState.drawnCards]
     })
 
-    setAppState(newAppState)
+    pushNewState(newAppState)
 
     inputRef.current.value = 1
   }
@@ -37,7 +37,7 @@ const Tableau = ({appState, setAppState}) => {
           const new_hand = appState.hand.with_added_card(c)
           const new_cards = appState.drawnCards.filter((x,filterIndex) => filterIndex !== i)
 
-          setAppState(
+          pushNewState(
             appState.with_updates({drawnCards: new_cards,
               hand: new_hand})
           )
@@ -45,7 +45,7 @@ const Tableau = ({appState, setAppState}) => {
       }
       {
         toCharterButton(e => {
-          setAppState(
+          pushNewState(
             appState.with_updates({
               drawnCards: appState.drawnCards.filter((x,filterIndex) => filterIndex !== i),
               charters: appState.charters.with_added_card(c)
