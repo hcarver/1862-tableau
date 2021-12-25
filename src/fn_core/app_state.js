@@ -2,10 +2,17 @@ import COMPANIES from './companies'
 import CardSet from './card_set'
 import Tableau from './tableau'
 
+const COLUMN_SIZE = 6
+
 class AppState {
   constructor({tableau, drawnCards, hand, bank_pool, charters} = {}) {
     this.tableau = new Tableau(tableau)
     this.drawnCards = drawnCards || []
+    this.card_columns = []
+
+    for (let i = 0; i < this.drawnCards.length; i += COLUMN_SIZE)
+      this.card_columns.push(drawnCards.slice(i, i + COLUMN_SIZE));
+
     this.hand = new CardSet(hand)
     this.bank_pool = new CardSet(bank_pool)
     this.charters = new CardSet(charters)

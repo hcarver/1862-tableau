@@ -2,12 +2,13 @@ import './App.css';
 import React from 'react';
 
 import COMPANIES from './fn_core/companies'
-import AppState from './fn_core/app_state'
 import { useLocalStorageForHistory } from './imperative_shell/hooks'
-import { toBankButton, toCharterButton, toHandButton } from './cpts/buttons'
 
+import ActiveCompanyDisplay from './cpts/ActiveCompanyDisplay'
 import Card from './cpts/Card'
-import CardSet from './cpts/CardSet'
+import Hand from './cpts/Hand'
+import Charters from './cpts/Charters'
+import BankPool from './cpts/BankPool'
 import Tableau from './cpts/Tableau'
 
 const DeckDisplay = ({tableau}) => {
@@ -50,114 +51,17 @@ function App() {
       <div className="row">
         <div className="col-3">
           <DeckDisplay tableau={tableau} />
-          <Card title="Companies">
-            <div className="text-left">
-              <button className="btn btn-link" aria-label="Remove random company" onClick={(e) => {pushNewState(appState.with_updates({tableau: tableau.remove_random_company()}))}}>
-                <span aria-hidden="true" className="text-danger">&times;</span>
-                {" "}
-                Remove random company
-              </button>
-            </div>
-            <ul className="list-unstyled text-left">
-              { COMPANIES.map(company => {
-                let status;
-                let actions;
-                if(tableau.removed_companies.includes(company)) {
-                  status = "(removed)"
-                } else if(tableau.active_companies.includes(company)) {
-                  status = "(active)"
-                  actions = [
-                    <button className="btn btn-link py-0" aria-label={`Deactivate ${company}`} onClick={(e) => {
-                      const newTableau = tableau.deactivate_company(company)
-                      const newState = appState.with_updates({tableau: newTableau})
-                      pushNewState(newState)}}>
-                    <span aria-hidden="true" className="text-danger">&times;</span>
-                    Deactivate
-                  </button>
-                  ]
-                } else {
-                  actions = [
-                    <button className="btn btn-link py-0" aria-label={`Remove ${company}`} onClick={(e) => {
-                      const newTableau = tableau.remove_company(company)
-                      const newState = appState.with_updates({tableau: newTableau})
-                      pushNewState(newState)
-                    }}>
-                    <span aria-hidden="true" className="text-danger">&times;</span>
-                    Remove
-                    </button>,
-                    <button className="btn btn-link py-0" aria-label={`Activate ${company}`} onClick={(e) => {pushNewState(appState.with_updates({tableau: tableau.activate_company(company)}))}}>
-                      <span aria-hidden="true" className="text-danger">&#10003;</span>
-                      Activate
-                    </button>
-                  ]
-                }
-
-                return <li>
-                  {company}
-                  {" "}
-                  <small>{status}</small>
-                  {" "}
-                  {actions}
-                </li>
-              })
-              }
-              </ul>
-            </Card>
-          </div>
-          <div className="col-6">
-            <Tableau appState={appState} pushNewState={pushNewState} />
-          </div>
-          <div className="col-3">
-            <Card title="Hand">
-              <CardSet card_set={appState.hand} actions_per_card={
-                [company =>
-                  toBankButton(e => {
-                    pushNewState(appState.with_updates({
-                      hand: appState.hand.without_card(company),
-                      bank_pool: appState.bank_pool.with_added_card(company)
-                    }))
-                  })
-                ]
-              }/>
-            </Card>
-            <Card title="Bank pool">
-              <CardSet card_set={appState.bank_pool} actions_per_card={
-                [
-                  company => toHandButton(e => {
-                    pushNewState(appState.with_updates({
-                      bank_pool: appState.bank_pool.without_card(company),
-                      hand: appState.hand.with_added_card(company)
-                    }))
-                  }),
-                  company => toCharterButton(e => {
-                    pushNewState(appState.with_updates({
-                      bank_pool: appState.bank_pool.without_card(company),
-                      charters: appState.charters.with_added_card(company)
-                    }))
-                  })
-                ]
-              }/>
-            </Card>
-            <Card title="On charters">
-              <CardSet card_set={appState.charters} actions_per_card={
-                [
-                  company => toHandButton(e => {
-                    pushNewState(appState.with_updates({
-                      charters: appState.charters.without_card(company),
-                      hand: appState.hand.with_added_card(company)
-                    }))
-                  }),
-                  company => toBankButton(e => {
-                    pushNewState(appState.with_updates({
-                      charters: appState.charters.without_card(company),
-                      bank_pool: appState.bank_pool.with_added_card(company)
-                    }))
-                  })
-                ]
-              }/>
-            </Card>
-          </div>
+          <ActiveCompanyDisplay appState={appState} pushNewState={pushNewState} />
         </div>
+        <div className="col-6">
+          <Tableau appState={appState} pushNewState={pushNewState} />
+        </div>
+        <div className="col-3">
+          <Hand appState={appState} pushNewState={pushNewState}/>
+          <BankPool appState={appState} pushNewState={pushNewState}/>
+          <Charters appState={appState} pushNewState={pushNewState}/>
+        </div>
+      </div>
     </div>
   );
 }

@@ -4,10 +4,8 @@ import Card from './Card'
 import { toCharterButton, toHandButton } from './buttons'
 
 const Tableau = ({appState, pushNewState}) => {
-  const inputRef = React.useRef()
-
-  const drawCardButton = () => {
-    const count = parseInt(inputRef.current.value) || 1
+  const drawColumnButton = () => {
+    const count = 6
 
     const new_cards = []
     let last_tableau = appState.tableau;
@@ -25,47 +23,56 @@ const Tableau = ({appState, pushNewState}) => {
     })
 
     pushNewState(newAppState)
-
-    inputRef.current.value = 1
   }
 
-  const company_list = (companies) => <ul className="list-unstyled">
-    {companies.map((c,i) => <li>
-      {c}
-      {
-        toHandButton(e => {
-          const new_hand = appState.hand.with_added_card(c)
-          const new_cards = appState.drawnCards.filter((x,filterIndex) => filterIndex !== i)
+  const columns = appState.card_columns.map(column => {
+    return <div className="card">
+      <ul className="list-group list-group-flush">
+        {column.map((c,i) => {
+          const lastInColumn = i === column.length - 1
+          const extraClass = lastInColumn && "list-group-item-primary"
 
-          pushNewState(
-            appState.with_updates({drawnCards: new_cards,
-              hand: new_hand})
-          )
-        })
-      }
-      {
-        toCharterButton(e => {
-          pushNewState(
-            appState.with_updates({
-              drawnCards: appState.drawnCards.filter((x,filterIndex) => filterIndex !== i),
-              charters: appState.charters.with_added_card(c)
-            })
-          )
-        })
-      }
-      </li>)}
-    </ul>
+          return <li className={`list-group-item p-1 ${extraClass}`}>
+            {c}
+            {
+              toHandButton(e => {
+                const new_hand = appState.hand.with_added_card(c)
+                const new_cards = appState.drawnCards.filter((x,filterIndex) => filterIndex !== i)
+
+                pushNewState(
+                  appState.with_updates({drawnCards: new_cards,
+                    hand: new_hand})
+                )
+              })
+            }
+            {
+              toCharterButton(e => {
+                pushNewState(
+                  appState.with_updates({
+                    drawnCards: appState.drawnCards.filter((x,filterIndex) => filterIndex !== i),
+                    charters: appState.charters.with_added_card(c)
+                  })
+                )
+              })
+            }
+          </li>
+        })}
+      </ul>
+    </div>
+  })
+
 
   return <Card title="Draw cards">
     <div className="card-text">
       <p className="form-inline justify-content-center">
-        <input className="form-control" type="number" min="1" ref={inputRef} placeholder="How many to draw"/>
-        <button className="btn btn-primary" onClick={drawCardButton}>Draw card</button>
+        <button className="btn btn-primary" onClick={drawColumnButton}>Draw column</button>
       </p>
       <p>
         Cards you've drawn (most recent first)
       </p>
-      {company_list(appState.drawnCards)}
+      <div className="card-columns" style={{columnCount: 4}}>
+        {columns}
+      </div>
     </div>
   </Card>
 }
