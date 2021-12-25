@@ -4,11 +4,11 @@ import Card from './Card'
 import COMPANIES from '../fn_core/companies'
 
 const ActiveCompanyDisplay = ({appState, pushNewState}) => {
-  const tableau = appState.tableau
+  const deck = appState.deck
 
   return <Card title="Companies">
     <div className="text-left">
-      <button className="btn btn-link" aria-label="Remove random company" onClick={(e) => {pushNewState(appState.with_updates({tableau: tableau.remove_random_company()}))}}>
+      <button className="btn btn-link" aria-label="Remove random company" onClick={(e) => {pushNewState(appState.with_updates({deck: deck.remove_random_company()}))}}>
         <span aria-hidden="true" className="text-danger">&times;</span>
         {" "}
         Remove random company
@@ -18,14 +18,14 @@ const ActiveCompanyDisplay = ({appState, pushNewState}) => {
       { COMPANIES.map(company => {
         let status;
         let actions;
-        if(appState.tableau.removed_companies.includes(company)) {
+        if(appState.deck.removed_companies.includes(company)) {
           status = "(removed)"
-        } else if(tableau.active_companies.includes(company)) {
+        } else if(deck.active_companies.includes(company)) {
           status = "(active)"
           actions = [
             <button className="btn btn-link py-0" aria-label={`Deactivate ${company}`} onClick={(e) => {
-              const newTableau = tableau.deactivate_company(company)
-              const newState = appState.with_updates({tableau: newTableau})
+              const newDeck = deck.deactivate_company(company)
+              const newState = appState.with_updates({deck: newDeck})
               pushNewState(newState)}}>
             <span aria-hidden="true" className="text-danger">&times;</span>
             Deactivate
@@ -34,14 +34,14 @@ const ActiveCompanyDisplay = ({appState, pushNewState}) => {
         } else {
           actions = [
             <button className="btn btn-link py-0" aria-label={`Remove ${company}`} onClick={(e) => {
-              const newTableau = tableau.remove_company(company)
-              const newState = appState.with_updates({tableau: newTableau})
+              const newDeck = deck.remove_company(company)
+              const newState = appState.with_updates({deck: newDeck})
               pushNewState(newState)
             }}>
             <span aria-hidden="true" className="text-danger">&times;</span>
             Remove
             </button>,
-            <button className="btn btn-link py-0" aria-label={`Activate ${company}`} onClick={(e) => {pushNewState(appState.with_updates({tableau: tableau.activate_company(company)}))}}>
+            <button className="btn btn-link py-0" aria-label={`Activate ${company}`} onClick={(e) => {pushNewState(appState.with_updates({deck: deck.activate_company(company)}))}}>
               <span aria-hidden="true" className="text-danger">&#10003;</span>
               Activate
             </button>

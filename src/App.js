@@ -8,27 +8,27 @@ import ActiveCompanyDisplay from './cpts/ActiveCompanyDisplay'
 import Card from './cpts/Card'
 import Hand from './cpts/Hand'
 import Charters from './cpts/Charters'
+import AppState from './fn_core/app_state'
 import BankPool from './cpts/BankPool'
 import Tableau from './cpts/Tableau'
 
-const DeckDisplay = ({tableau}) => {
+const DeckDisplay = ({deck}) => {
   return <Card title="Deck">
     <p>
       {`Cards in deck:
-                  ${tableau.total_count()}`}
+                  ${deck.total_count()}`}
     </p>
     <p>
       Card counts:
       {" "}
-      {COMPANIES.map(company => `${company}: ${tableau.current_count(company)}`).join(", ")}
+      {COMPANIES.map(company => `${company}: ${deck.current_count(company)}`).join(", ")}
     </p>
   </Card>
 }
 
 function App() {
-  const { undo, reset, currentState: appState, pushNewState } = useLocalStorageForHistory()
-
-  const tableau = appState.tableau;
+  let { undo, reset, currentState: appState, pushNewState } = useLocalStorageForHistory()
+  appState = appState || new AppState()
 
   return (
     <div className="App">
@@ -50,7 +50,7 @@ function App() {
       </div>
       <div className="row">
         <div className="col-3">
-          <DeckDisplay tableau={tableau} />
+          <DeckDisplay deck={appState.deck} />
           <ActiveCompanyDisplay appState={appState} pushNewState={pushNewState} />
         </div>
         <div className="col-6">

@@ -1,32 +1,32 @@
 import COMPANIES from './companies'
 import CardSet from './card_set'
-import Tableau from './tableau'
+import Deck from './deck'
 
 const COLUMN_SIZE = 6
 
 class AppState {
-  constructor({tableau, drawnCards, hand, bank_pool, charters} = {}) {
-    this.tableau = new Tableau(tableau)
+  constructor({deck, drawnCards, hand, bank_pool, charters} = {}) {
+    this.deck = new Deck(deck)
     this.drawnCards = drawnCards || []
     this.card_columns = []
 
-    for (let i = 0; i < this.drawnCards.length; i += COLUMN_SIZE)
-      this.card_columns.push(drawnCards.slice(i, i + COLUMN_SIZE));
+    for (let i = 0; i < this.drawnCards.length; i += 6)
+      this.card_columns.push(drawnCards.slice(i, i + 6));
 
     this.hand = new CardSet(hand)
     this.bank_pool = new CardSet(bank_pool)
     this.charters = new CardSet(charters)
 
-    if(!tableau) {
+    if(!deck) {
       COMPANIES.forEach(company => {
-        this.tableau.cards.set(company, 7)
+        this.deck.cards.set(company, 7)
       })
     }
   }
 
   to_obj() {
     return {
-      tableau: this.tableau.to_obj(),
+      deck: this.deck.to_obj(),
       drawnCards: this.drawnCards,
       bank: this.bank_pool.to_obj(),
       hand: this.hand.to_obj(),
@@ -35,8 +35,8 @@ class AppState {
   }
 
   with_updates(obj_in) {
-    let {tableau, drawnCards, hand, bank_pool, charters} = {
-      tableau: this.tableau,
+    let {deck, drawnCards, hand, bank_pool, charters} = {
+      deck: this.deck,
       drawnCards: this.drawnCards,
       hand: this.hand,
       bank_pool: this.bank_pool,
@@ -44,7 +44,7 @@ class AppState {
       ...obj_in
     }
 
-    return new AppState({tableau, drawnCards, hand, bank_pool, charters})
+    return new AppState({deck, drawnCards, hand, bank_pool, charters})
   }
 }
 

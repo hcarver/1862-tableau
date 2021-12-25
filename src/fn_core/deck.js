@@ -1,6 +1,6 @@
 import COMPANIES from './companies'
 
-export default class Tableau {
+export default class Deck {
   constructor({removed_companies = [], active_companies = [], cards = []} = {}) {
     this.removed_companies = removed_companies
     this.active_companies = active_companies
@@ -24,28 +24,28 @@ export default class Tableau {
   }
 
   remove_company(company) {
-    const newTableau = new Tableau()
-    newTableau.removed_companies = [...this.removed_companies, company]
-    newTableau.cards = new Map(this.cards)
-    newTableau.cards.set(company, 0)
-    newTableau.active_companies = [...this.active_companies]
-    return newTableau
+    const newDeck = new Deck()
+    newDeck.removed_companies = [...this.removed_companies, company]
+    newDeck.cards = new Map(this.cards)
+    newDeck.cards.set(company, 0)
+    newDeck.active_companies = [...this.active_companies]
+    return newDeck
   }
 
   activate_company(company) {
-    const newTableau = new Tableau()
-    newTableau.active_companies = [...this.active_companies, company]
-    newTableau.cards = new Map(this.cards)
-    newTableau.removed_companies = [...this.removed_companies]
-    return newTableau
+    const newDeck = new Deck()
+    newDeck.active_companies = [...this.active_companies, company]
+    newDeck.cards = new Map(this.cards)
+    newDeck.removed_companies = [...this.removed_companies]
+    return newDeck
   }
 
   deactivate_company(company) {
-    const newTableau = new Tableau()
-    newTableau.active_companies = this.active_companies.filter(c => c !== company)
-    newTableau.cards = new Map(this.cards)
-    newTableau.removed_companies = [...this.removed_companies]
-    return newTableau
+    const newDeck = new Deck()
+    newDeck.active_companies = this.active_companies.filter(c => c !== company)
+    newDeck.cards = new Map(this.cards)
+    newDeck.removed_companies = [...this.removed_companies]
+    return newDeck
   }
 
   draw_card() {
@@ -58,13 +58,13 @@ export default class Tableau {
 
     const picked_card = this.random_member(all_cards)
 
-    const new_tableau = new Tableau()
-    new_tableau.removed_companies = [...this.removed_companies]
-    new_tableau.active_companies = [...this.active_companies]
-    new_tableau.cards = new Map(this.cards)
-    new_tableau.cards.set(picked_card, this.cards.get(picked_card) - 1)
+    const newDeck = new Deck()
+    newDeck.removed_companies = [...this.removed_companies]
+    newDeck.active_companies = [...this.active_companies]
+    newDeck.cards = new Map(this.cards)
+    newDeck.cards.set(picked_card, this.cards.get(picked_card) - 1)
 
-    return [new_tableau, picked_card]
+    return [newDeck, picked_card]
   }
 
   remove_random_company() {
