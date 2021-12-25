@@ -5,24 +5,7 @@ import { toCharterButton, toHandButton } from './buttons'
 
 const Tableau = ({appState, pushNewState}) => {
   const drawColumnButton = () => {
-    const count = 6
-
-    const new_cards = []
-    let last_deck = appState.deck;
-    for(let i = 0; i < count; ++i) {
-      const [new_deck, card] = last_deck.draw_card()
-      if(card) {
-        new_cards.push(card)
-        last_deck = new_deck
-      }
-    }
-
-    const newAppState = appState.with_updates({
-      deck: last_deck,
-      drawnCards: [...new_cards, ...appState.drawnCards]
-    })
-
-    pushNewState(newAppState)
+    pushNewState(appState.with_column_drawn())
   }
 
   const columns = appState.card_columns.map(column => {
