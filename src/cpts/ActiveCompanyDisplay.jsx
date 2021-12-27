@@ -9,7 +9,7 @@ const ActiveCompanyDisplay = ({appState, pushNewState, showActions = true}) => {
   return <Card title="Companies">
     {showActions &&
         <div className="text-left">
-          <button className="btn btn-link" aria-label="Remove random company" onClick={(e) => {pushNewState(appState.with_updates({deck: deck.remove_random_company()}))}}>
+          <button className="btn btn-link" aria-label="Remove random company" onClick={(e) => {pushNewState(appState.with_updates({deck: deck.remove_random_company()}).filter_tableau())}}>
             <span aria-hidden="true" className="text-danger">&times;</span>
             {" "}
             Remove random company
@@ -40,7 +40,7 @@ const ActiveCompanyDisplay = ({appState, pushNewState, showActions = true}) => {
           actions = [
             <button className="btn btn-link py-0" aria-label={`Remove ${company}`} onClick={(e) => {
               const newDeck = deck.remove_company(company)
-              const newState = appState.with_updates({deck: newDeck})
+              const newState = appState.with_updates({deck: newDeck}).filter_tableau()
               pushNewState(newState)
             }}>
             <span aria-hidden="true" className="text-danger">&times;</span>

@@ -30,6 +30,12 @@ class AppState {
     }
   }
 
+  filter_tableau() {
+    return this.with_updates({
+      card_columns: this.card_columns.map(column => column.filter(x => !this.deck.removed_companies.includes(x)))
+    })
+  }
+
   with_updates(obj_in) {
     let {deck, card_columns, hand, phase, bank_pool, charters} = {
       phase: this.phase,

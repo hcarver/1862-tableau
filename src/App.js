@@ -63,7 +63,7 @@ const Phase0App = ({appState, pushNewState}) => {
 const Phase1App = ({appState, pushNewState}) => {
   const noMulliganOrExternalMulligan = () => pushNewState(appState.with_updates({
     phase: NORMAL_PLAY_PHASE
-  }))
+  }).filter_tableau())
 
   const removeDifferentCompanies = () => {
     let newDeck = appState.deck.without_removed_companies()
@@ -74,7 +74,7 @@ const Phase1App = ({appState, pushNewState}) => {
     pushNewState(appState.with_updates({
       phase: NORMAL_PLAY_PHASE,
       deck: newDeck
-    }))
+    }).filter_tableau())
   }
 
   const redeal_column = (i) => {
@@ -82,7 +82,7 @@ const Phase1App = ({appState, pushNewState}) => {
         pushNewState(
           appState.with_mulliganed_column(i).with_updates({
             phase: NORMAL_PLAY_PHASE
-          })
+          }).filter_tableau()
         )}>
       Deal column again
     </button>
