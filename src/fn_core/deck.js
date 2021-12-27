@@ -24,40 +24,42 @@ export default class Deck {
     }
   }
 
+  unremoved_overflow_pile() {
+    return this.overflow_pile.filter(x => !this.removed_companies.includes(x))
+  }
+
   current_count(company) {
+    if(this.removed_companies.includes(company)) {
+      return 0
+    }
     return this.cards.get(company) + this.overflow_pile.filter(x => x === company).length
   }
 
   total_count() {
-    return Array.from(this.cards.values()).reduce((a, b) => a + b, 0) + this.overflow_pile.length
+    const company_counts = COMPANIES.map(c => this.current_count(c))
+    return company_counts.reduce((a, b) => a + b)
   }
 
   remove_company(company) {
-    const newDeck = new Deck()
-    newDeck.removed_companies = [...this.removed_companies, company]
-    newDeck.cards = new Map(this.cards)
-    newDeck.cards.set(company, 0)
-    newDeck.active_companies = [...this.active_companies]
-    newDeck.overflow_pile = this.overflow_pile.filter(x => x !== company)
-    return newDeck
+    return this.with_updates({
+      removed_companies: [...this.removed_companies, company]
+    })
   }
 
   activate_company(company) {
-    const newDeck = new Deck()
-    newDeck.active_companies = [...this.active_companies, company]
-    newDeck.cards = new Map(this.cards)
-    newDeck.removed_companies = [...this.removed_companies]
-    newDeck.overflow_pile = [...this.overflow_pile]
-    return newDeck
+    return this.with_updates({
+      active_companies: [...this.active_companies, company],
+    })
   }
 
   deactivate_company(company) {
-    const newDeck = new Deck()
-    newDeck.active_companies = this.active_companies.filter(c => c !== company)
-    newDeck.cards = new Map(this.cards)
-    newDeck.removed_companies = [...this.removed_companies]
-    newDeck.overflow_pile = [...this.overflow_pile]
-    return newDeck
+    return this.with_updates({
+      active_companies: this.active_companies.filter(c => c !== company),
+    })
+  }
+
+  unremoved_companies() {
+    return COMPANIES.filter(x => !this.removed_companies.includes(x))
   }
 
   draw_card() {
@@ -65,30 +67,31 @@ export default class Deck {
     if(count === 0) return [this, null];
 
     const all_cards = [].concat(
-      ...COMPANIES.map((company) => Array(this.cards.get(company)).fill(company))
+      ...this.unremoved_companies().map((company) => Array(this.cards.get(company)).fill(company))
     )
 
     // Random deck card first
     if(all_cards.length > 0) {
       const picked_card = this.random_member(all_cards)
 
-      const newDeck = new Deck()
-      newDeck.removed_companies = [...this.removed_companies]
-      newDeck.active_companies = [...this.active_companies]
-      newDeck.cards = new Map(this.cards)
-      newDeck.cards.set(picked_card, this.cards.get(picked_card) - 1)
-      newDeck.overflow_pile = [...this.overflow_pile]
+      const newMap = new Map(this.cards)
+      newMap.set(picked_card, this.cards.get(picked_card) - 1)
+
+      const newDeck = this.with_updates({
+        cards: newMap
+      })
 
       return [newDeck, picked_card]
     }
 
     // Card from the overflow pile second
-    const [first, ...rest] = this.overflow_pile
-    const newDeck = new Deck()
-    newDeck.removed_companies = [...this.removed_companies]
-    newDeck.active_companies = [...this.active_companies]
-    newDeck.cards = new Map(this.cards)
-    newDeck.overflow_pile = rest
+    // NOTE this removes unplayed cards from the overflow pile if their company has been removed from the game.
+    // Most other actions leave those cards in place.
+    const [first, ...rest] = this.unremoved_overflow_pile()
+
+    const newDeck = this.with_updates({
+      overflow_pile: rest
+    })
 
     return [newDeck, first]
   }
@@ -107,6 +110,30 @@ export default class Deck {
 
   random_member(list) {
     return list[Math.floor(Math.random() * list.length)]
+  }
+
+  without_removed_companies() {
+    return this.with_updates({
+      removed_companies: []
+    })
+  }
+
+  with_overflow_pile(pile) {
+    return this.with_updates({
+      overflow_pile: pile
+    })
+  }
+
+  with_updates(obj_in) {
+    let {removed_companies, active_companies, cards, overflow_pile} = {
+      removed_companies: this.removed_companies,
+      active_companies: this.active_companies,
+      cards: this.cards,
+      overflow_pile: this.overflow_pile,
+      ...obj_in
+    }
+
+    return new Deck({removed_companies, active_companies, cards, overflow_pile})
   }
 }
 

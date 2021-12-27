@@ -62,6 +62,14 @@ class AppState {
       card_columns: [...this.card_columns, new_cards]
     })
   }
+
+  with_mulliganed_column(column_index) {
+    return this.with_updates({
+      deck: this.deck.with_overflow_pile(this.card_columns[column_index]),
+      card_columns: this.card_columns.filter((x,i) => i !== column_index)
+    }).with_column_drawn()
+  }
+
 }
 
 export default AppState

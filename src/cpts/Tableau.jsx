@@ -3,7 +3,7 @@ import React from 'react'
 import Card from './Card'
 import { toCharterButton, toHandButton } from './buttons'
 
-const Tableau = ({appState, pushNewState}) => {
+const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]}) => {
   const drawColumnButton = () => {
     pushNewState(appState.with_column_drawn())
   }
@@ -18,7 +18,7 @@ const Tableau = ({appState, pushNewState}) => {
           return <li className={`list-group-item p-1 ${extraClass}`}>
             {c}
             {
-              toHandButton(e => {
+              mayManipulate && toHandButton(e => {
                 const new_hand = appState.hand.with_added_card(c)
                 const new_card_columns = [...appState.card_columns]
                 new_card_columns[column_index] = new_card_columns[column_index].filter((x, filterIndex) => filterIndex !== i)
@@ -31,7 +31,7 @@ const Tableau = ({appState, pushNewState}) => {
               })
             }
             {
-              toCharterButton(e => {
+              mayManipulate && toCharterButton(e => {
                 const new_card_columns = [...appState.card_columns]
                 new_card_columns[column_index] = new_card_columns[column_index].filter((x, filterIndex) => filterIndex !== i)
                 pushNewState(
@@ -44,6 +44,9 @@ const Tableau = ({appState, pushNewState}) => {
             }
           </li>
         })}
+        {
+          columnActions.map(ca => ca(column_index))
+        }
       </ul>
     </div>
   })
@@ -51,11 +54,12 @@ const Tableau = ({appState, pushNewState}) => {
 
   return <Card title="Draw cards">
     <div className="card-text">
-      <p className="form-inline justify-content-center">
+      { mayManipulate && <p className="form-inline justify-content-center">
         <button className="btn btn-primary" onClick={drawColumnButton}>Draw column</button>
       </p>
+      }
       <p>
-        Cards you've drawn (most recent first)
+        Cards you've drawn
       </p>
       <div className="card-columns" style={{columnCount: 4}}>
         {columns}
