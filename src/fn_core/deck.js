@@ -1,26 +1,35 @@
 import COMPANIES from './companies'
 
 export default class Deck {
-  constructor({removed_companies = [], active_companies = [], cards = []} = {}) {
+  // The overflow may be set by a Mulligan taken at the start of the game.
+  constructor({removed_companies = [], active_companies = [], cards, overflow_pile = []} = {}) {
     this.removed_companies = removed_companies
     this.active_companies = active_companies
-    this.cards = new Map(cards)
+    this.cards = new Map(cards || [])
+    this.overflow_pile = overflow_pile
+
+    if(!cards) {
+      COMPANIES.forEach(company => {
+        this.cards.set(company, 7)
+      })
+    }
   }
 
   to_obj() {
     return {
       removed_companies: this.removed_companies,
       active_companies: this.active_companies,
-      cards: Array.from(this.cards.entries())
+      cards: Array.from(this.cards.entries()),
+      overflow_pile: this.overflow_pile
     }
   }
 
   current_count(company) {
-    return this.cards.get(company)
+    return this.cards.get(company) + this.overflow_pile.filter(x => x === company).length
   }
 
   total_count() {
-    return Array.from(this.cards.values()).reduce((a, b) => a + b)
+    return Array.from(this.cards.values()).reduce((a, b) => a + b, 0) + this.overflow_pile.length
   }
 
   remove_company(company) {
@@ -29,6 +38,7 @@ export default class Deck {
     newDeck.cards = new Map(this.cards)
     newDeck.cards.set(company, 0)
     newDeck.active_companies = [...this.active_companies]
+    newDeck.overflow_pile = this.overflow_pile.filter(x => x !== company)
     return newDeck
   }
 
@@ -37,6 +47,7 @@ export default class Deck {
     newDeck.active_companies = [...this.active_companies, company]
     newDeck.cards = new Map(this.cards)
     newDeck.removed_companies = [...this.removed_companies]
+    newDeck.overflow_pile = [...this.overflow_pile]
     return newDeck
   }
 
@@ -45,6 +56,7 @@ export default class Deck {
     newDeck.active_companies = this.active_companies.filter(c => c !== company)
     newDeck.cards = new Map(this.cards)
     newDeck.removed_companies = [...this.removed_companies]
+    newDeck.overflow_pile = [...this.overflow_pile]
     return newDeck
   }
 
@@ -53,18 +65,32 @@ export default class Deck {
     if(count === 0) return [this, null];
 
     const all_cards = [].concat(
-      ...COMPANIES.map((company) => Array(this.current_count(company)).fill(company))
+      ...COMPANIES.map((company) => Array(this.cards.get(company)).fill(company))
     )
 
-    const picked_card = this.random_member(all_cards)
+    // Random deck card first
+    if(all_cards.length > 0) {
+      const picked_card = this.random_member(all_cards)
 
+      const newDeck = new Deck()
+      newDeck.removed_companies = [...this.removed_companies]
+      newDeck.active_companies = [...this.active_companies]
+      newDeck.cards = new Map(this.cards)
+      newDeck.cards.set(picked_card, this.cards.get(picked_card) - 1)
+      newDeck.overflow_pile = [...this.overflow_pile]
+
+      return [newDeck, picked_card]
+    }
+
+    // Card from the overflow pile second
+    const [first, ...rest] = this.overflow_pile
     const newDeck = new Deck()
     newDeck.removed_companies = [...this.removed_companies]
     newDeck.active_companies = [...this.active_companies]
     newDeck.cards = new Map(this.cards)
-    newDeck.cards.set(picked_card, this.cards.get(picked_card) - 1)
+    newDeck.overflow_pile = rest
 
-    return [newDeck, picked_card]
+    return [newDeck, first]
   }
 
   remove_random_company() {

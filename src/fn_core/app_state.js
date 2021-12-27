@@ -9,7 +9,7 @@ const SELECT_MULLIGAN_PHASE = 1
 const NORMAL_PLAY_PHASE = 2
 
 class AppState {
-  constructor({deck, card_columns, drawnCards, hand, phase, bank_pool, charters} = {}) {
+  constructor({deck, card_columns, hand, phase, bank_pool, charters} = {}) {
     this.deck = new Deck(deck)
     this.card_columns = card_columns || []
     this.phase = phase || SELECT_TABLEAU_SIZE_PHASE
@@ -17,12 +17,6 @@ class AppState {
     this.hand = new CardSet(hand)
     this.bank_pool = new CardSet(bank_pool)
     this.charters = new CardSet(charters)
-
-    if(!deck) {
-      COMPANIES.forEach(company => {
-        this.deck.cards.set(company, 7)
-      })
-    }
   }
 
   to_obj() {
