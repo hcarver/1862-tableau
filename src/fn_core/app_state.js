@@ -9,14 +9,10 @@ const SELECT_MULLIGAN_PHASE = 1
 const NORMAL_PLAY_PHASE = 2
 
 class AppState {
-  constructor({deck, drawnCards, hand, phase, bank_pool, charters} = {}) {
+  constructor({deck, card_columns, drawnCards, hand, phase, bank_pool, charters} = {}) {
     this.deck = new Deck(deck)
-    this.drawnCards = drawnCards || []
-    this.card_columns = []
+    this.card_columns = card_columns || []
     this.phase = phase || SELECT_TABLEAU_SIZE_PHASE
-
-    for (let i = 0; i < this.drawnCards.length; i += COLUMN_SIZE)
-      this.card_columns.push(drawnCards.slice(i, i + COLUMN_SIZE));
 
     this.hand = new CardSet(hand)
     this.bank_pool = new CardSet(bank_pool)
@@ -32,7 +28,7 @@ class AppState {
   to_obj() {
     return {
       deck: this.deck.to_obj(),
-      drawnCards: this.drawnCards,
+      card_columns: this.card_columns,
       bank: this.bank_pool.to_obj(),
       hand: this.hand.to_obj(),
       charters: this.charters.to_obj(),
@@ -41,17 +37,19 @@ class AppState {
   }
 
   with_updates(obj_in) {
-    let {deck, drawnCards, hand, phase, bank_pool, charters} = {
+    let {deck, card_columns, hand, phase, bank_pool, charters} = {
       phase: this.phase,
       deck: this.deck,
-      drawnCards: this.drawnCards,
+      card_columns: this.card_columns,
       hand: this.hand,
       bank_pool: this.bank_pool,
       charters: this.charters,
       ...obj_in
     }
 
-    return new AppState({deck, drawnCards, hand, bank_pool, phase, charters})
+    card_columns = card_columns.filter(x => x.length > 0)
+
+    return new AppState({deck, card_columns, hand, bank_pool, phase, charters})
   }
 
   with_column_drawn() {
@@ -67,7 +65,7 @@ class AppState {
 
     return this.with_updates({
       deck: last_deck,
-      drawnCards: [...new_cards, ...this.drawnCards]
+      card_columns: [...this.card_columns, new_cards]
     })
   }
 }

@@ -8,7 +8,7 @@ const Tableau = ({appState, pushNewState}) => {
     pushNewState(appState.with_column_drawn())
   }
 
-  const columns = appState.card_columns.map(column => {
+  const columns = appState.card_columns.map((column, column_index) => {
     return <div className="card">
       <ul className="list-group list-group-flush">
         {column.map((c,i) => {
@@ -20,19 +20,23 @@ const Tableau = ({appState, pushNewState}) => {
             {
               toHandButton(e => {
                 const new_hand = appState.hand.with_added_card(c)
-                const new_cards = appState.drawnCards.filter((x,filterIndex) => filterIndex !== i)
+                const new_card_columns = [...appState.card_columns]
+                new_card_columns[column_index] = new_card_columns[column_index].filter((x, filterIndex) => filterIndex !== i)
 
                 pushNewState(
-                  appState.with_updates({drawnCards: new_cards,
+                  appState.with_updates({
+                    card_columns: new_card_columns,
                     hand: new_hand})
                 )
               })
             }
             {
               toCharterButton(e => {
+                const new_card_columns = [...appState.card_columns]
+                new_card_columns[column_index] = new_card_columns[column_index].filter((x, filterIndex) => filterIndex !== i)
                 pushNewState(
                   appState.with_updates({
-                    drawnCards: appState.drawnCards.filter((x,filterIndex) => filterIndex !== i),
+                    card_columns: new_card_columns,
                     charters: appState.charters.with_added_card(c)
                   })
                 )
