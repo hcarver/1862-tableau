@@ -9,16 +9,42 @@ const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]
   }
 
   const columns = appState.card_columns.map((column, column_index) => {
-    return <div className="card">
+    const onDragOver = (ev) => {
+      ev.preventDefault()
+    }
+
+    const onDrop = (ev) => {
+      const { company, source_column, index_in_column } = JSON.parse(ev.dataTransfer.getData("text/plain") || {})
+      if (source_column !== column_index &&
+        company === column[column.length - 1])
+      {
+        const new_columns = [...appState.card_columns]
+        new_columns[source_column] = new_columns[source_column].splice(0, index_in_column)
+        new_columns[column_index] = [...new_columns[column_index], company]
+
+        pushNewState(appState.with_updates({ card_columns: new_columns }).filter_tableau())
+      }
+    }
+
+    return <div className="card" onDragOver={onDragOver} onDrop={onDrop}>
       <ul className="list-group list-group-flush">
         {column.map((c,i) => {
           const lastInColumn = i === column.length - 1
           const extraClass = lastInColumn && "list-group-item-primary"
+          const onDragStart = (ev) => {
+            ev.dataTransfer.dropEffect = "move"
+            ev.dataTransfer.setData("text/plain", JSON.stringify({
+              company: c,
+              column: column[column.length-1],
+              source_column: column_index,
+              index_in_column: i
+            }));
+          }
 
-          return <li className={`list-group-item p-1 ${extraClass}`}>
+          return <li className={`list-group-item p-1 ${extraClass}`} draggable={lastInColumn} onDragStart={onDragStart} >
             {c}
             {
-              mayManipulate && toHandButton(e => {
+              mayManipulate && lastInColumn && toHandButton(e => {
                 const new_hand = appState.hand.with_added_card(c)
                 const new_card_columns = [...appState.card_columns]
                 new_card_columns[column_index] = new_card_columns[column_index].filter((x, filterIndex) => filterIndex !== i)
@@ -31,7 +57,7 @@ const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]
               })
             }
             {
-              mayManipulate && toCharterButton(e => {
+              mayManipulate && lastInColumn && toCharterButton(e => {
                 const new_card_columns = [...appState.card_columns]
                 new_card_columns[column_index] = new_card_columns[column_index].filter((x, filterIndex) => filterIndex !== i)
                 pushNewState(
