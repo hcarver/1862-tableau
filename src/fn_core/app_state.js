@@ -1,4 +1,3 @@
-import COMPANIES from './companies'
 import CardSet from './card_set'
 import Deck from './deck'
 
