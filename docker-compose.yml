@@ -6,4 +6,4 @@ services:
     volumes:
       - .:/src
     ports:
-      - "3000:3000"
+      - "1862:3000"
