@@ -38,9 +38,13 @@
 
 .stock-card {
   border: #DDD 1px solid;
-  border-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  position: relative;
+  padding-left: 3px;
 }
 
 .stock-card-text {
   padding: 3px 8px;
+  font-weight: 500;
 }
