@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Company from './Company'
+
 const CardSet = ({card_set, actions_per_card = []}) => {
   const companies = card_set.company_list()
 
@@ -9,7 +11,7 @@ const CardSet = ({card_set, actions_per_card = []}) => {
     )
 
     return <div>
-      {company}
+      <Company company={company} />
       {" x "}
       {card_set.company_count(company)}
       {actions}

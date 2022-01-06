@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Card from './Card'
+import Company from './Company'
 import { toCharterButton, toHandButton } from './buttons'
 
 const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]}) => {
@@ -42,7 +43,7 @@ const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]
           }
 
           return <li className={`list-group-item p-1 ${extraClass}`} draggable={lastInColumn} onDragStart={onDragStart} >
-            {c}
+            <Company company={c} />
             {
               mayManipulate && lastInColumn && toHandButton(e => {
                 const new_hand = appState.hand.with_added_card(c)

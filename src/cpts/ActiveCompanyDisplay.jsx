@@ -2,6 +2,7 @@ import React from 'react'
 
 import Card from './Card'
 import COMPANIES from '../fn_core/companies'
+import Company from './Company'
 
 const ActiveCompanyDisplay = ({appState, pushNewState, showActions = true}) => {
   const deck = appState.deck
@@ -54,7 +55,7 @@ const ActiveCompanyDisplay = ({appState, pushNewState, showActions = true}) => {
         }
 
         return <li>
-          {company}
+          <Company company={company}/>
           {" "}
           <small>{status}</small>
           {" "}

@@ -35,3 +35,12 @@
     transform: rotate(360deg);
   }
 }
+
+.stock-card {
+  border: #DDD 1px solid;
+  border-radius: 5px;
+}
+
+.stock-card-text {
+  padding: 3px 8px;
+}

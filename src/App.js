@@ -6,6 +6,7 @@ import { SELECT_TABLEAU_SIZE_PHASE, SELECT_MULLIGAN_PHASE, NORMAL_PLAY_PHASE } f
 import { useLocalStorageForHistory } from './imperative_shell/hooks'
 
 import ActiveCompanyDisplay from './cpts/ActiveCompanyDisplay'
+import Company from './cpts/Company'
 import Card from './cpts/Card'
 import Hand from './cpts/Hand'
 import Charters from './cpts/Charters'
@@ -22,7 +23,12 @@ const DeckDisplay = ({deck}) => {
     <p>
       Card counts:
       {" "}
-      {COMPANIES.map(company => `${company}: ${deck.current_count(company)}`).join(", ")}
+      {COMPANIES.map(company => <span className="d-inline-block px-1">
+        <Company company={company} />
+        x
+        {deck.current_count(company)}
+        </span>)
+      }
     </p>
     { deck.overflow_pile.length > 0 &&
         <p>Overflow cards:
