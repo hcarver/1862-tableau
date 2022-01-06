@@ -77,6 +77,17 @@ const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]
     </div>
   })
 
+  const rows = []
+  for(let i = 0; 4*i < columns.length; i++) {
+    rows.push(
+      <div className="row">
+        <div className="col-3 py-2">{columns[4*i]}</div>
+        <div className="col-3 py-2">{columns[4*i+1]}</div>
+        <div className="col-3 py-2">{columns[4*i+2]}</div>
+        <div className="col-3 py-2">{columns[4*i+3]}</div>
+      </div>
+    )
+  }
 
   return <Card title="Draw cards">
     <div className="card-text">
@@ -87,9 +98,7 @@ const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]
       <p>
         Cards you've drawn
       </p>
-      <div className="card-columns" style={{columnCount: 4}}>
-        {columns}
-      </div>
+      {rows}
     </div>
   </Card>
 }

@@ -123,8 +123,8 @@ const Phase2App = ({appState, pushNewState}) => {
     </div>
     <div className="col-3">
       <Hand appState={appState} pushNewState={pushNewState}/>
-      <BankPool appState={appState} pushNewState={pushNewState}/>
       <Charters appState={appState} pushNewState={pushNewState}/>
+      <BankPool appState={appState} pushNewState={pushNewState}/>
     </div>
   </div>
 }
