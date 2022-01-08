@@ -69,12 +69,23 @@ class AppState {
   }
 
   with_mulliganed_column(column_index) {
-    return this.with_updates({
-      deck: this.deck.with_overflow_pile(this.card_columns[column_index]),
+    const removed_companies = this.deck.removed_companies
+
+    // Draw new cards from a version of the deck without any removed companies
+    let new_deck = this.deck.without_removed_companies()
+
+    let state_with_new_companies = this.with_updates({
+      deck: new_deck.with_overflow_pile(this.card_columns[column_index]),
       card_columns: this.card_columns.filter((x,i) => i !== column_index)
     }).with_column_drawn()
-  }
 
+    // Remove the companies from the deck again
+    for(let company of removed_companies) {
+      new_deck = new_deck.remove_company(company)
+    }
+
+    return state_with_new_companies.with_updates({deck: new_deck})
+  }
 }
 
 export default AppState
