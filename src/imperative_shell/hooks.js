@@ -17,7 +17,12 @@ function useLocalStorageForHistory() {
   const appState = history.length > 0 ? history[history.length - 1] : null
   const pushNewState = newState => setHistory(currentHistory => [...currentHistory, newState])
 
-  const reset = () => {setHistory([])}
+  const reset = () => {
+    if(window.confirm("Are you sure you want to reset the whole game?"))
+    {
+      setHistory([])
+    }
+  }
   const undo = () => {
     if(history.length > 0) {
       setHistory(history.slice(0, history.length - 1))
