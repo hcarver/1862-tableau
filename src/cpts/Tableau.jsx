@@ -2,6 +2,7 @@ import React from 'react'
 
 import Card from './Card'
 import Company from './Company'
+import COMPANIES from '../fn_core/companies'
 import { toCharterButton, toHandButton } from './buttons'
 
 const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]}) => {
@@ -90,16 +91,41 @@ const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]
     )
   }
 
-  return <Card title="Draw cards">
+  const card_counts = {}
+  for(const column of appState.card_columns) {
+    for(const company of column) {
+      card_counts[company] = 1 + (card_counts[company] || 0)
+    }
+  }
+
+  const summary = []
+  for(const company of COMPANIES) {
+    if(!card_counts[company])
+      continue
+
+    summary.push(
+      <span className="d-inline-block px-1">
+        <Company company={company} />
+        x
+        {card_counts[company]}
+      </span>
+    )
+  }
+
+  return <Card title="Tableau">
     <div className="card-text">
       { mayManipulate && <p className="form-inline justify-content-center">
         <button className="btn btn-primary" onClick={drawColumnButton}>Draw column</button>
       </p>
       }
-      <p>
+      <h5 className="card-title">
         Cards you've drawn
-      </p>
+      </h5>
       {rows}
+      <h5 className="card-title">
+        Summary
+      </h5>
+      <p>{summary}</p>
     </div>
   </Card>
 }
