@@ -74,10 +74,18 @@ class AppState {
     // Draw new cards from a version of the deck without any removed companies
     let new_deck = this.deck.without_removed_companies()
 
+    new_deck = new_deck.with_overflow_pile(this.card_columns[column_index])
+
+    const new_cc = this.card_columns.filter((x,i) => i !== column_index)
+
     let state_with_new_companies = this.with_updates({
-      deck: new_deck.with_overflow_pile(this.card_columns[column_index]),
-      card_columns: this.card_columns.filter((x,i) => i !== column_index)
-    }).with_column_drawn()
+      deck: new_deck,
+      card_columns: new_cc
+    })
+
+    state_with_new_companies = state_with_new_companies.with_column_drawn()
+
+    new_deck = state_with_new_companies.deck
 
     // Remove the companies from the deck again
     for(let company of removed_companies) {
