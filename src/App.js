@@ -58,7 +58,7 @@ const Phase0App = ({appState, pushNewState}) => {
   }
 
   return <Card title="Select difficulty">
-    <div class="btn-group">
+    <div className="btn-group">
       <button className="btn btn-secondary" onClick={() => selectDifficulty(10)}>Easy (10 columns)</button>
       <button className="btn btn-primary" onClick={() => selectDifficulty(9)}>Normal (9 columns)</button>
       <button className="btn btn-secondary" onClick={() => selectDifficulty(8)}>Hard (8 columns)</button>
