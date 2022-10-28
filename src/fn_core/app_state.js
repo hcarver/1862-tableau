@@ -22,7 +22,7 @@ class AppState {
     return {
       deck: this.deck.to_obj(),
       card_columns: this.card_columns,
-      bank: this.bank_pool.to_obj(),
+      bank_pool: this.bank_pool.to_obj(),
       hand: this.hand.to_obj(),
       charters: this.charters.to_obj(),
       phase: this.phase
