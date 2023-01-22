@@ -65,7 +65,7 @@ function useLocalStorageForHistory() {
     }
   }
 
-  return { undo, reset, currentState: appState, pushNewState }
+  return { undo, reset, currentState: appState, pushNewState, history: JSON.stringify(storedHistory) }
 }
 
 export { useLocalStorageForHistory }

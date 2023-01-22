@@ -136,7 +136,7 @@ const Phase2App = ({appState, pushNewState}) => {
 }
 
 function App() {
-  let { undo, reset, currentState: appState, pushNewState } = useLocalStorageForHistory()
+  let { undo, reset, currentState: appState, pushNewState, history } = useLocalStorageForHistory()
   appState = appState || new AppState()
 
   let currentAppState;
@@ -149,6 +149,14 @@ function App() {
   }
   else {
     currentAppState = <Phase2App appState={appState} pushNewState={pushNewState} />
+  }
+
+  const copyHistoryToClipboard = () => {
+    navigator.clipboard.writeText(history).then( () => {
+      alert("Game history copied to the clipboard. Now DM or email it to me!")
+    }, (err) => {
+      alert("Your browser wouldn't let us copy directly to your clipboard. Instead copy this and DM or email it to me:\n\n" + history)
+    })
   }
 
   return (
@@ -170,6 +178,14 @@ function App() {
         </div>
       </div>
       {currentAppState}
+      <footer className="App-footer">
+        <p>
+          Found a bug 🐜 ?
+          <button className="btn btn-block btn-secondary rounded-0" onClick={copyHistoryToClipboard}>
+            Copy debugging information
+          </button>
+        </p>
+      </footer>
     </div>
   );
 }
