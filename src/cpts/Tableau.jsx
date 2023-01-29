@@ -21,7 +21,7 @@ const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]
         company === column[column.length - 1])
       {
         const new_columns = [...appState.card_columns]
-        new_columns[source_column] = new_columns[source_column].splice(0, index_in_column)
+        new_columns[source_column] = new_columns[source_column].slice(0, index_in_column)
         new_columns[column_index] = [...new_columns[column_index], company]
 
         pushNewState(appState.with_updates({ card_columns: new_columns }).filter_tableau())
@@ -37,7 +37,6 @@ const Tableau = ({appState, pushNewState, mayManipulate = true, columnActions=[]
             ev.dataTransfer.dropEffect = "move"
             ev.dataTransfer.setData("text/plain", JSON.stringify({
               company: c,
-              column: column[column.length-1],
               source_column: column_index,
               index_in_column: i
             }));
